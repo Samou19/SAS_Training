@@ -1,0 +1,27 @@
+# Main steps
+Access Data
+1. Import the TSAClaims2002_2017.csv file.
+Explore Data
+1. Preview the data.
+2. Explore the following columns and make note of any adjustments needed using the information from the Requirements document.
+a. Claim_Site
+b. Disposition
+c. Claim_Type
+d. Date_Received
+e. Incident_Date
+Prepare Data
+1. Remove duplicate rows.
+2. Sort the data by ascending Incident_Date.
+3. Clean the Claim_Site column.
+4. Clean the Disposition column.
+5. Clean the Claim_Type column.
+6. Convert all State values to uppercase and all StateName values to proper case.
+7. Create a new column to indicate date issues.
+8. Add permanent labels and formats.
+9. Exclude County and City from the output table.
+Analyze Data
+1. Analyze the overall data to answer the business questions. Be sure to add appropriate titles.
+2. Analyze the state-level data to answer the business questions. Be sure to add appropriate titles.
+Export Data
+1. Export the end results into a single PDF named ClaimReports that has a style of your choice.
+2. Customize the procedure labels in your report.
