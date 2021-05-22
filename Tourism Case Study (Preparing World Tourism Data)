@@ -36,4 +36,78 @@ Create the NoCountryFound table that has a list of countries from Cleaned_Touris
 
 *********************My results*****************************************************************
 
+/*Create the Cleaned_Tourism Table*/ 
+/*Part 1 
+1. If necessary, redefine the cr library. Read the cr.tourism table and create the 
+cr.cleaned_tourism table. 
+2. Remove the columns _1995 through _2013. 
+3. Create the Country_Name and Tourism_Type columns from values in the Country column. Valid 
+values for Tourism_Type are Inbound tourism and Outbound tourism. Remove rows that contain this 
+labeling information and no other data. */ 
+data cr.cleaned_tourism; 
+length Country_Name $300 Tourism_Type $20; 
+retain Country_Name "" Tourism_Type ""; 
+set cr.tourism(drop =_1995-_2013); 
+if A ne . then Country_Name=Country; 
+*Country_Name=propcase(Country_Name); 
+if lowcase(Country) = "inbound tourism" then Tourism_Type="Inbound tourism"; 
+else if lowcase(Country) = "outbound tourism" then Tourism_Type="Outbound tourism"; 
+if Country_Name ne Country and Country ne Tourism_Type; 
+Series = upcase(Series); 
+if Series=".." then Series="."; 
+convtype = scan(Country, -1, " "); 
+if _2014=".." then _2014="."; 
+if convtype="Mn" then do; 
+if _2014 ne "." then Y2014=input(_2014,16.)*1000000; 
+else Y2014=.; 
+category = cat(scan(Country, 1, "-", "r"), "- US$"); 
+end; 
+else if convtype="Thousands" then do; 
+if _2014 ne "." then Y2014=input(_2014,16.)*1000; 
+else Y2014=.; 
+category = scan(Country, 1, "-", "r"); 
+end; 
+format Y2014 comma25.; 
+drop A convtype Country _2014; 
+run; 
+proc format ; 
+value contIDS 
+1 = 'North America' 
+2 = 'South America' 
+3 = 'Europe' 
+4 = 'Africa' 
+5 = 'Asia' 
+6 = 'Oceania' 
+7 = 'Antarctica'; 
+run; 
+/*Merge matchind row*/ 
+proc sort data=cr.country_info(rename=(Country=Country_Name)) 
+out=cr.Country_sorted; 
+by Country_Name; 
+run; 
+data cr.final_tourism cr.NoCountryFound(keep=country_name); 
+merge cr.cleaned_tourism(in=t) cr.Country_sorted(in=c); 
+by country_name; 
+if t=1 and c=1 then output cr.final_tourism; 
+if (t=1 and c=0) and first.country_name=1 then output cr.NoCountryFound; 
+format continent contIDS.; 
+run; 
+/*Write a program to analyze the number of arrivals in 2014 for each continent. 
+Generate mean, minimum, and maximum statistics, rounded to the nearest whole 
+
+What continent has the highest average number of arrivals for 2014?*/ 
+proc means data=cr.final_tourism mean min max maxdec=0; 
+var y2014; 
+class Continent; 
+where category="Arrivals"; 
+run; 
+/*Question 2 
+Modify your program to generate an overall mean (rounded to the nearest whole number) 
+for tourism expenditure in other countries. 
+What was the overall mean tourism expenditure in other countries for 2014? Use only numerals 
+in your answer*/ 
+proc means data=cr.final_tourism mean maxdec=0; 
+var y2014; 
+where lowcase(Category) contains "tourism expenditure in other countries"; 
+run;
 
