@@ -1,0 +1,39 @@
+*****************Questions*******************************************
+Create the Cleaned_Tourism Table
+Part 1
+1. If necessary, redefine the cr library. Read the cr.tourism table and create the cr.cleaned_tourism table.
+2. Remove the columns _1995 through _2013.
+3. Create the Country_Name and Tourism_Type columns from values in the Country column. Valid values for Tourism_Type are Inbound tourism and Outbound tourism. Remove rows that contain this labeling information and no other data.
+Part 2
+4. In the Series column, convert values to uppercase and convert ".." to missing a character value.
+5. Determine the conversion type (Mn or Thousands) that will be used to calculate values for the new Y2014 column. Hint: You might want to create a new column with this information.
+6. In the _2014 column, change the data not available (values of "..") to a single period.
+Part 3
+7. Create the Y2014 column by explicitly converting character values in _2014 to numeric and multiplying by the conversion type (millions or thousands) that is found in the Country column or new column, if you created one.
+8. Create the new Category column from values in the Country column and change the original values to the following valid values:
+• Arrivals
+• Departures
+• Passenger Transport - US$
+• Tourism expenditure in other countries - US$
+• Tourism expenditure in the country – US$
+• Travel - US$
+9. Permanently format Y2014 with the COMMA format.
+10. Include only Country_Name, Tourism_Type, Category, Series, and Y2014 in the output table.
+Create the Final_Tourism Table
+1. Create a format for the Continent column that labels continent IDs with the corresponding continent names:
+1 = North America
+2 = South America
+3 = Europe
+4 = Africa
+5 = Asia
+6 = Oceania
+7 = Antarctica
+2. Merge the cleaned_tourism table with a sorted version of country_info to create the final_tourism table. Include only matches in the output table. Use the new format to format Continent.
+2
+Copyright © 2018, SAS Institute Inc., Cary, North Carolina, USA. ALL RIGHTS RESERVED.
+Create the NoCountryFound Table
+Create the NoCountryFound table that has a list of countries from Cleaned_Tourism that are not found in the country_info table. This table should have only one row for each country.
+
+*********************My results*****************************************************************
+
+
