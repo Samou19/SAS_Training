@@ -25,3 +25,157 @@ Analyze Data
 Export Data
 1. Export the end results into a single PDF named ClaimReports that has a style of your choice.
 2. Customize the procedure labels in your report.
+
+**************My result*************************************************************************
+01/05/2021 Code : Case_study.sas
+1/3
+/*Access Data*/
+%let chemin = /home/u56690585/ECRB94/data;
+libname tsa "&chemin&";
+options validvarname=V7;
+proc import datafile="&chemin/TSAClaims2002_2017.csv" dbms=csv
+out=tsa.claims_row replace;
+guessingrows=max;
+run; *220855;
+/*Explore Data*/
+proc print data=tsa.claims_row (obs=20);
+run;
+/*Examiner le contenu*/
+proc contents data=tsa.claims_row varnum;
+run;
+/*Examiner les modalites des variables categorielles*/
+proc freq data=tsa.claims_row;
+tables Claim_Number
+disposition
+claim_type
+date_received
+incident_date/nocum nopercent;
+format date_received incident_date year4.;
+run;
+proc print data=tsa.claims_row;
+where date_received < incident_date;
+format date_received incident_date date9.;
+run; *1845 obs;
+/*Prepare Data*/
+*1. Remove duplicate row;
+proc sort data=tsa.claims_row
+out=tsa.claims_nodup noduprecs;
+by _all_;
+run;
+*2. Sort the data by ascending incident_date;
+proc sort data=tsa.claims_nodup;
+by Incident_Date;
+run;
+*3 Create a table clean;
+Data tsa.claims_cleaned;
+set tsa.claims_nodup;
+/*Clean the Claim_Site colum*/
+if Claim_Site in ('-', '') then Claim_Site='Unknown';
+/*Clean the Disposition colum*/
+if Disposition in ('-', '') then Disposition='Unknown';
+else if Disposition='lossed: Contractor Claim' then Disposition='Clossed:Contractor Claim';
+else if Disposition='Clossed: Canceled' then Disposition='Clossed:Canceled';
+/*Clean the Claim_Type colum*/
+if Claim_Type in ('-', '') then Claim_Type='Unknown';
+else if Claim_Type ='Passenger Property Loss/Personal Injur' then Claim_Type='Passenger Property Loss';
+else if Claim_Type ='Passenger Property Loss/Personal Injury' then Claim_Type='Passenger Property Loss';
+else if Claim_Type ='Property Damage/Personal Injury' then Claim_Type='Property Damage';
+/*Convert all State values to uppercase and allStateName values to propcase*/
+State = upcase(State);
+StateName= propcase(StateName);
+/*Create a new culumn to indicate Date issue*/
+if (Incident_Date>Date_Received or
+Incident_Date=. or Date_Received=. or
+year(Incident_Date)<2002 or year(Incident_Date)>2017 or
+year(Date_Received)<2002 or year(Date_Received)>2017) then Date_Issues='Needs review';
+/*Add a permenante label and format*/
+format Incident_Date Date_Received date9. Close_Amount dollar12.;
+label
+Airport_Code="Airport Code"
+Airport_Name="Airport Name"
+01/05/2021 Code : Case_study.sas
+2/3
+Claim_Number="Claim Number"
+Claim_Site="Claim Site"
+Claim_Type="Claim Type"
+Close_Amount="Close Amount"
+Date_Received="Date Received"
+Date_Issues="Date Issues"
+Incident_Date="Incident Date"
+Item_Category="Item Category";
+/*Drop contry and city*/
+drop County city;
+run;
+/*Verification des modifications apportés*/
+proc freq data=tsa.claims_cleaned order=freq;
+tables Date_Issues
+date_received
+incident_date/nocum nopercent;
+run;
+proc freq data=tsa.claims_cleaned order=freq;
+tables
+date_received
+incident_date/nocum nopercent;
+format date_received incident_date monname.;
+run;
+/*Analyse data*/
+%let statename = California;
+%let outpath = /home/u56690585/ECRB94/output;
+ods pdf file="&outpath/report.pdf" style=meadow pdftoc=1;
+ods noproctitle;
+*1. How many date issues are in the overall data?;
+ods proclabel "Overall date issues";
+title "Overall date issues in data";
+proc freq data=tsa.claims_cleaned order=freq;
+tables
+Date_Issues/missing nocum nopercent;
+run; /*4241 obs*/
+title;
+*2.How many claims per year of Incident_Date are in the overall data? Be sure to include a plot.;
+ods graphics on;
+ods proclabel "Overall claim per year";
+title "Overall claim per year in data";
+proc freq data=tsa.claims_cleaned order=freq;
+table Incident_Date/ nocum nopercent plots=freqplot;
+format Incident_Date year4.;
+where Date_Issues is null;
+run;
+title;
+*3.Lastly, a user should be able to dynamically input a specific state value and answer the following:;
+/*a. What are the frequency values for Claim_Type for the selected state?
+b. What are the frequency values for Claim_Site for the selected state?
+c. What are the frequency values for Disposition for the selected state?*/
+ods proclabel "Overall claim overview";
+title "&statename claim type, claim site, disposition";
+proc freq data=tsa.claims_cleaned order=freq;
+tables Claim_Type Claim_Site Disposition/ nocum nopercent;
+format Incident_Date year4.;
+where StateName="&statename" and Date_Issues is null;
+run;
+title;
+*What is the mean, minimum, maximum, and sum of Close_Amount for the selected state?;
+ods proclabel "Overall Close_Amount statistics";
+title "Close_Amount statistics for &statename";
+proc means data=tsa.claims_cleaned mean min max sum maxdec=0;
+var Close_Amount;
+where StateName="&statename" and Date_Issues is null;
+run;
+title;
+01/05/2021 Code : Case_study.sas
+3/3
+ods pdf close;
+/* Tableau de missing value
+proc means data=Sashelp.Heart nolabels NMISS stackodsoutput;
+var _NUMERIC_;
+ods output Summary = MissingValues;
+run;
+proc print; run;
+*/
+/*Pour avoir la liste de variable d'une table*/
+proc sql ;
+select name into : vars separated by " "
+from dictionary.columns
+where LIBNAME = upcase("tsa")
+and MEMNAME = upcase("claims_nodup")
+order by name;
+quit;
